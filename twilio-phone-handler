@@ -1,0 +1,21 @@
+#!/bin/sh
+scriptname=$(readlink -f $0)
+mypath=$(dirname $scriptname)
+. "${mypath}/config.sh"
+[ -z "$startscript" ] && startscript="https://localhost/start.php"
+
+to=$1
+subject=$2
+body=$3
+
+#parse body and extract information
+eval "$body"
+
+sms_message="${status} on ${host}: ${trigger}"
+call_message="$sms_message"
+
+curl -X POST "$startscript" \
+--data-urlencode "to=${to}"  \
+--data-urlencode "sms_message=${sms_message}"  \
+--data-urlencode "call_message=${call_message}" \
+

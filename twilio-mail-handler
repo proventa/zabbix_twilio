@@ -1,0 +1,26 @@
+#!/bin/sh
+scriptname=$(readlink -f $0)
+mypath=$(dirname $scriptname)
+. "${mypath}/config.sh"
+[ -z "$startscript" ] && startscript="https://localhost/start.php"
+[ -z "$to" ] && to=""
+message=`cat`
+
+subject=`echo "$message" | grep '^Subject: ' | head -n 1 | cut -d ':' -f 2`
+
+if echo "$message" | grep 'X-Mailer: Redmine' >/dev/null; then
+  if ! echo "$message" | egrep  'Fehlerklasse \(oncall\): [12]' >/dev/null; then
+    #we only forward redmine messages with error level 1 and 2
+    exit 0
+  fi
+fi
+
+sms_message="${subject}"
+call_message="$sms_message"
+
+for number in $to; do
+  curl -k -X POST "$startscript" \
+  --data-urlencode "to=${number}"  \
+  --data-urlencode "sms_message=${sms_message}"  \
+  --data-urlencode "call_message=${call_message}"
+done
